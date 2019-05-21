@@ -1,0 +1,11 @@
+#
+# ADDITIONAL_DEFAULT_PROPERTIES
+#
+ro.secure=1
+ro.allow.mock.location=0
+ro.debuggable=0
+persist.sys.strict_op_enable=false
+persist.env.phone.autoprovision=true
+persist.env.phone.newsim=false
+persist.radio.apm_sim_not_pwdn=1
+persist.sys.usb.config=none

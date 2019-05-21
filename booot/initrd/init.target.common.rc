@@ -1,0 +1,107 @@
+#Copyright (c) 2014 Microsoft Mobile. All rights reserved.
+#This software, including documentation, is protected by copyright controlled by
+#Microsoft Mobile. All rights are reserved. Copying, including reproducing,
+#storing, adapting or translating, any or all of this material requires the prior
+#written consent of Microsoft Mobile. This material also contains confidential
+#information which may not be disclosed to others without the prior written
+#consent of Microsoft Mobile.
+
+############## Common init script for all AoL products ############
+# What should be started by this script:
+#   1. Needed by all AoL products
+#   2. Platform independent
+#   3. Product independent
+###################################################################
+
+service typedesignator /system/bin/sh /init.nokia.rm.sh
+    user root
+    disabled
+    oneshot
+
+on early-boot
+    start typedesignator
+
+on init
+    mkdir /custom 0771 system system
+
+on post-fs-data
+    # We chown/chmod /custom again so because mount is run as root + defaults
+    # TODO: check permissions
+    chown system system /custom
+    chmod 0771 /custom
+    # We restorecon /custom in case the userdata partition has been reset.
+    restorecon /custom
+
+    mkdir /persist/property 0700 root root
+
+#start security and simlock daemon
+service nemod /system/bin/nemod
+   class late_start
+   user root
+   group root
+
+on property:device.card_valid=0
+    start simlock_notify
+
+on property:device.card_2_valid=0
+    start simlock_notify
+
+on property:device.card_validation=imei
+    start simlock_notify
+
+on property:device.card_validation=key
+    start simlock_notify
+
+on property:device.card_validation=cert
+    start simlock_notify
+
+on property:device.card_validation=other
+    start simlock_notify
+
+service simlock_notify /system/bin/sh /system/etc/simlock.sh
+   oneshot
+
+on property:sys.boot_completed=1
+   start simlock_notify
+
+service china_variant /system/bin/sh /system/etc/china_variant.sh
+    class main
+    user root
+    group root
+    oneshot
+
+service ssr_parameters /system/bin/sh /system/etc/init.ssr.parameters.sh
+    user root
+    group root
+    disabled
+    oneshot
+
+service ssr_ramdump /system/bin/subsystem_ramdump 2 1
+    user root
+    group root
+    disabled
+
+on property:persist.sys.ssr.restart_level=*
+    start ssr_parameters
+
+#BYDSafe Begin
+service iptable_cfg /system/bin/iptable_cfg
+   user root
+   group root
+   disabled
+   oneshot
+#BYDSafe End
+
+#
+# Updates modem items, if needed at boot
+#
+service NVUpdater /system/bin/NVUpdater -m
+    class core
+    user root
+    oneshot
+
+# Loading UFSD module on boot
+service ufsd /system/xbin/start-ufsd
+    class main
+    user root
+    oneshot
